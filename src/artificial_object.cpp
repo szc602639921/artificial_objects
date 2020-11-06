@@ -7,27 +7,33 @@
 #include <string>     
 
 int main(int argc, char** argv){
-
-  std::string name = argv[1];
-  std::cout << "add path for " << argv[1] << std::endl;
-  ros::init(argc, argv, argv[1]);
-  ros::NodeHandle node;
-
+  
+  
+  ros::init(argc, argv, "artificial_object",ros::init_options::AnonymousName);
   std::cout << "getting information" << std::endl;
-
+  std::string node_name = ros::this_node::getName();  
   std::vector<double> xx;
   std::vector<double> yy;
   std::vector<double> color;
   std::string frame_id;
+  std::string name_space;
+
   int freq;
   float mark_size;
 
-  node.getParam("x", xx);
-  node.getParam("y", yy);
-  node.getParam("color",color);
-  node.getParam("freq",freq);
-  node.getParam("mark_size",mark_size);
-  node.getParam("frame_id",frame_id);
+  ros::NodeHandle node;
+
+  node.param<std::string>(node_name +"/name_space", name_space, "default");
+  node.param<std::string>(node_name +"/frame_id",frame_id,"map");
+
+  node.getParam(node_name +"/x", xx);
+  node.getParam(node_name +"/y", yy);
+  node.getParam(node_name +"/color",color);
+  node.getParam(node_name +"/freq",freq);
+  node.getParam(node_name +"/mark_size",mark_size);
+  
+
+  std::cout << name_space << std::endl;
 
   if(yy.size() != xx.size()){
     ROS_INFO("the lengths of the coordinates are different");
@@ -41,11 +47,12 @@ int main(int argc, char** argv){
   visualization_msgs::MarkerArray maker_list;
   int time = 0;
   while (node.ok() && time < xx.size()){
-      time++;
+      
+      
       visualization_msgs::Marker marker;
       marker.header.frame_id = frame_id;
       marker.header.stamp = ros::Time();
-      marker.ns = name;
+      marker.ns = name_space;
       marker.id = time;
       marker.type = visualization_msgs::Marker::SPHERE;
       marker.action = visualization_msgs::Marker::ADD;
@@ -68,6 +75,8 @@ int main(int argc, char** argv){
       maker_list.markers.push_back(marker);
       vis_pub.publish(maker_list);
       rate.sleep();
+      time++;
   }
+  ros::spin();
   return 0;
 };
